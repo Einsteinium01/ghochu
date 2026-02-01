@@ -13,8 +13,8 @@ const io = new Server(server, {
   cors: { origin: "*", methods: ["GET", "POST"] }
 });
 
-// 🔥 Store state of each room
-const rooms = {};
+// 🔥 Room state storage
+const rooms = {}; // { roomId: { videoId, timestamp, isPlaying } }
 
 io.on("connection", socket => {
   console.log("User connected:", socket.id);
@@ -23,6 +23,7 @@ io.on("connection", socket => {
     socket.join(roomId);
     console.log("Joined room:", roomId);
 
+    // Send current state to new user
     if (rooms[roomId]) {
       socket.emit("room_state", rooms[roomId]);
     }
@@ -37,14 +38,9 @@ io.on("connection", socket => {
     io.to(data.roomId).emit("sync_play", data);
   });
 
-  socket.on("pause_control", data => {
+  socket.on("pause_song", data => {
     if (rooms[data.roomId]) rooms[data.roomId].isPlaying = false;
-    io.to(data.roomId).emit("sync_pause_control");
-  });
-
-  socket.on("play_control", data => {
-    if (rooms[data.roomId]) rooms[data.roomId].isPlaying = true;
-    io.to(data.roomId).emit("sync_play_control");
+    io.to(data.roomId).emit("sync_pause");
   });
 
   socket.on("time_update", data => {
